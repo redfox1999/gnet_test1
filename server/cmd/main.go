@@ -11,6 +11,7 @@ import (
 	"gnet_test1/internal/handler"
 	"gnet_test1/internal/network"
 	"gnet_test1/internal/pool"
+	"gnet_test1/internal/protocol"
 )
 
 func main() {
@@ -24,10 +25,19 @@ func main() {
 		log.Printf("[警告] 加载配置文件失败: %v，将使用默认配置", err)
 	}
 
+	// 创建路由实例
+	router := handler.NewRouter()
+
+	// 注册测试用 Handler
+	router.Register(uint16(protocol.CmdCalculate), &handler.CalculateHandler{})
+	router.Register(uint16(protocol.CmdSmall), &handler.SmallHandler{})
+	router.Register(uint16(protocol.CmdMedium), &handler.MediumHandler{})
+	router.Register(uint16(protocol.CmdLarge), &handler.LargeHandler{})
+
 	// 初始化业务协程池
 	workerPool := pool.InitWorkerPool(config.Global.Server.WorkerPoolSize,
 		config.Global.Server.TaskQueueSize,
-		handler.GlobalRouter)
+		router)
 	// 使用配置创建服务器
 	server := network.NewGatewayServer(&config.Global.Server, workerPool)
 

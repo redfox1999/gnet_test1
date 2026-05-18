@@ -8,6 +8,7 @@ import (
 
 	"gnet_test1/config"
 	"gnet_test1/internal/pool"
+	"gnet_test1/internal/protocol"
 
 	"github.com/panjf2000/gnet/v2"
 )
@@ -87,10 +88,10 @@ func (gs *GatewayServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	return gnet.None
 }
 
-func (gs *GatewayServer) dispatchBusiness(c gnet.Conn, cmdID uint16, seq uint32, payload []byte) gnet.Action {
+func (gs *GatewayServer) dispatchBusiness(c gnet.Conn, cmdID uint32, payload []byte) gnet.Action {
 	ctx, _ := c.Context().(*UserContext)
 
-	if cmdID == CmdShutDown {
+	if cmdID == protocol.CmdShutDown {
 		log.Println("⚠️ [核心管理] 收到管理员远程关服指令！准备停止全网服务...")
 		return gnet.Shutdown
 	}
@@ -98,7 +99,7 @@ func (gs *GatewayServer) dispatchBusiness(c gnet.Conn, cmdID uint16, seq uint32,
 	// 构建工作任务并提交到线程池
 	task := &pool.WorkTask{
 		ConnID: uint64(ctx.ConnID),
-		CmdID:  cmdID,
+		CmdID:  uint16(cmdID),
 		Body:   payload,
 		Conn:   c,
 	}

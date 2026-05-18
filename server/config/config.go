@@ -4,7 +4,7 @@ import (
 	"os"
 	"sync"
 
-	"gopkg.in/yaml.v3" // 需要先运行: go get gopkg.in/yaml.v3
+	"gopkg.in/yaml.v3"
 )
 
 // GlobalConfig 全局配置单例
