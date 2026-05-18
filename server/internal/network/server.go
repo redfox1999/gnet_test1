@@ -37,8 +37,15 @@ func (gs *GatewayServer) Addr() string {
 }
 
 func (gs *GatewayServer) OnBoot(eng gnet.Engine) gnet.Action {
-	log.Printf("🚀 工业级网关已成功在 %s 启动！监听中...", gs.cfg.Addr)
-	gs.engine = eng // 保存引擎句柄
+	cfg := config.Global
+	log.Printf("🚀 工业级网关已成功在 %s 启动！", cfg.Server.Addr)
+	log.Printf("📋 配置信息:")
+	log.Printf("   App: env=%s, version=%s", cfg.App.Env, cfg.App.Version)
+	log.Printf("   Server: multicore=%v, worker_pool_size=%d, task_queue_size=%d, max_packet_size=%d",
+		cfg.Server.Multicore, cfg.Server.WorkerPoolSize, cfg.Server.TaskQueueSize, cfg.Server.MaxPacketSize)
+	log.Printf("   Server: heartbeat_check=%ds, heartbeat_timeout=%ds", cfg.Server.HeartbeatCheck, cfg.Server.HeartbeatTimeout)
+	log.Printf("   Log: level=%s, path=%s, stdout=%v", cfg.Log.Level, cfg.Log.Path, cfg.Log.Stdout)
+	gs.engine = eng
 
 	return gnet.None
 }
