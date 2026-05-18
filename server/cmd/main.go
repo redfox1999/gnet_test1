@@ -36,8 +36,7 @@ func main() {
 
 	// 初始化业务协程池
 	workerPool := pool.InitWorkerPool(config.Global.Server.WorkerPoolSize,
-		config.Global.Server.TaskQueueSize,
-		router)
+		config.Global.Server.TaskQueueSize, router)
 	// 使用配置创建服务器
 	server := network.NewGatewayServer(&config.Global.Server, workerPool)
 
@@ -60,7 +59,6 @@ func main() {
 		// 阻塞等待关服信号到来
 		server.CloseEngine()
 		log.Println("🎉 服务器优雅退出成功！")
-		os.Exit(0)
 		// 第一步：通知 gnet 引擎关闭。
 		// 你的 server 结构体需要暴露出内部的 gnet.Engine 实例（可以通过 OnBoot 事件拿到）
 		// 调用 engine.Stop() 会停止接收新连接，并让 main 里的 gnet.Run 优雅解除阻塞
