@@ -1,0 +1,19 @@
+# 应用基础配置
+app:
+  env: dev           # 运行环境: dev, test, prod
+  version: "1.0.0"   # 系统版本号
+
+# 网络层配置（针对 gnet 调优）
+server:
+  addr: "tcp://0.0.0.0:9000"    # 监听地址
+  multicore: true                # 是否开启多核心绑定
+  worker_pool_size: 1024         # 业务线程池大小
+  max_packet_size: 1048576       # 单个包最大限制（字节），默认 1MB
+  heartbeat_check: 30            # 心跳检测间隔（秒）
+  heartbeat_timeout: 90          # 心跳超时时间（秒）
+
+# 日志配置
+log:
+  level: info      # 日志级别: debug, info, warn, error
+  path: ./logs/    # 日志输出路径
+  stdout: true     # 是否同时输出到控制台
