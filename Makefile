@@ -9,10 +9,14 @@ all: server client client_v2
 # 编译所有（与 all 相同，提供更直观的命令）
 build: all
 
-# 编译 server
+# 编译 server (注入版本信息)
 server:
 	@mkdir -p $(OUTPUT_DIR)
-	@cd server && go build -o ../$(OUTPUT_DIR)/server ./cmd/main.go
+	@cd server && \
+	GIT_COMMIT=`git rev-parse --short HEAD 2>/dev/null || echo "unknown"` && \
+	GIT_TIME=`git log -1 --format=%ct 2>/dev/null || echo "0"` && \
+	BUILD_TIME=`date -u +%Y-%m-%dT%H:%M:%SZ` && \
+	go build -ldflags "-X main.GitCommit=$$GIT_COMMIT -X main.CommitTime=$$GIT_TIME -X main.BuildTime=$$BUILD_TIME" -o ../$(OUTPUT_DIR)/server ./cmd/main.go
 	@echo "✅ server 编译完成: $(OUTPUT_DIR)/server"
 
 # 编译 client

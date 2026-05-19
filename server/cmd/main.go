@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -14,10 +15,28 @@ import (
 	"gnet_test1/internal/protocol"
 )
 
+var (
+	Version    = "unknown"
+	GitCommit  = "unknown"
+	CommitTime = "unknown"
+	BuildTime  = "unknown"
+)
+
 func main() {
 	// 解析命令行参数
 	cfgPath := flag.String("config", "config/config.yaml", "配置文件路径")
+	showVersion := flag.Bool("version", false, "显示版本信息")
+	flag.BoolVar(showVersion, "V", false, "显示版本信息（简写）")
 	flag.Parse()
+
+	// 显示版本信息
+	if *showVersion {
+		fmt.Printf("版本: %s\n", Version)
+		fmt.Printf("Git Commit: %s\n", GitCommit)
+		fmt.Printf("Commit Time: %s\n", CommitTime)
+		fmt.Printf("Build Time: %s\n", BuildTime)
+		return
+	}
 
 	// 加载配置文件
 	_, err := config.InitConfig(*cfgPath)
