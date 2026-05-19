@@ -81,6 +81,9 @@ func (gs *GatewayServer) statsReporter() {
 			Int("connections", gs.connMgr.Count()).
 			Int("goroutines", runtime.NumGoroutine()).
 			Str("memory", fmt.Sprintf("%.2fMB", float64(m.Alloc)/1024/1024)).
+			Uint64("pool_get", pool.Metrics.GetCount).
+			Uint64("pool_hit", pool.Metrics.HitCount).
+			Uint64("pool_make", pool.Metrics.MakeCount).
 			Msg("📊 状态监控")
 	}
 }

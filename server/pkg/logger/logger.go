@@ -74,7 +74,8 @@ func Init(cfg *Config) {
 		})
 	}
 
-	// 如果配置了日志文件路径，创建文件输出
+	// 设置时间精度为毫秒
+	zerolog.TimeFieldFormat = "2006-01-02 15:04:05.000"
 	if cfg.Path != "" {
 		if err := os.MkdirAll(cfg.Path, 0755); err != nil {
 			// 创建目录失败，只输出到 stdout
