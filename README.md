@@ -35,7 +35,6 @@ server/
 │   ├── handler/         # 业务处理器
 │   ├── manager/         # 连接管理器
 │   ├── network/         # 网络层
-│   │   ├── protocol.go  # 协议定义
 │   │   ├── server.go    # 服务器
 │   │   └── traffic.go   # 流量处理
 │   ├── pool/            # 内存池
