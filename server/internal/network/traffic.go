@@ -3,6 +3,7 @@ package network
 import (
 	"encoding/binary"
 
+	"gnet_test1/internal/pool"
 	"gnet_test1/internal/protocol"
 	"gnet_test1/pkg/logger"
 
@@ -42,9 +43,7 @@ func (gs *GatewayServer) OnTraffic(c gnet.Conn) gnet.Action {
 
 		payload := fullPacket[int(protocol.HeaderLen):totalLen]
 
-		// 需要内存池，申请内存，复制 payload 到新内存
-
-		payloadCopy := make([]byte, len(payload))
+		payloadCopy := pool.GetBytes(len(payload))
 		copy(payloadCopy, payload)
 
 		action := gs.dispatchBusiness(c, cmdID, payloadCopy)

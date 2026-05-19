@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/binary"
+
 	"gnet_test1/internal/protocol"
 
 	"github.com/panjf2000/gnet/v2"

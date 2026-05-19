@@ -41,6 +41,7 @@ func (w *Worker) workLoop() {
 			break
 		}
 		w.router.Execute(task.Conn, task.CmdID, task.Body)
+		PutWorkTask(task)
 	}
 }
 

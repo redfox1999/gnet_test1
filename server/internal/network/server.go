@@ -113,12 +113,11 @@ func (gs *GatewayServer) dispatchBusiness(c gnet.Conn, cmdID uint32, payload []b
 		}
 	}
 
-	task := &pool.WorkTask{
-		ConnID: connID,
-		CmdID:  uint16(cmdID),
-		Body:   payload,
-		Conn:   c,
-	}
+	task := pool.GetWorkTask()
+	task.ConnID = connID
+	task.CmdID = uint16(cmdID)
+	task.Body = payload
+	task.Conn = c
 	gs.workerPool.Submit(task)
 
 	return gnet.None
