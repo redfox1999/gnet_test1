@@ -2,7 +2,7 @@ package pool
 
 import (
 	"gnet_test1/internal/handler"
-	"log"
+	"gnet_test1/pkg/logger"
 
 	"github.com/panjf2000/gnet/v2"
 )
@@ -75,8 +75,7 @@ func (wp *WorkerPool) Submit(task *WorkTask) {
 
 	default:
 		// 🚨 触发保护机制：该 Worker 的业务队列已经爆满了（说明业务处理速度赶不上客户端发包速度）
-		log.Printf("[警告] Worker-%d 队列爆满! ConnID: %d 的包被丢弃，可能存在恶意刷包或业务卡顿",
-			targetWorker.id, task.ConnID)
+		logger.WorkerQueueFull(targetWorker.id, task.ConnID)
 
 		// 生产环境常用做法：
 		// 方案 A：直接丢弃该数据包，什么都不做。

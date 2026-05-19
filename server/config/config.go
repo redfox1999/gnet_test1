@@ -22,16 +22,21 @@ var Default = &Config{
 	Server: ServerConfig{
 		Addr:             "tcp://0.0.0.0:9000",
 		Multicore:        true,
-		WorkerPoolSize:   10,   // 业务协程池（Goroutine Pool）的大小
+		WorkerPoolSize:   1024, // 业务协程池（Goroutine Pool）的大小
 		TaskQueueSize:    1024, // 每个 Worker 协程的任务队列大小
 		MaxPacketSize:    65535,
 		HeartbeatCheck:   30,
 		HeartbeatTimeout: 90,
 	},
 	Log: LogConfig{
-		Level:  "info",
-		Path:   "./logs/",
-		Stdout: true,
+		Level:      "info",
+		GnetLevel:  "warn",
+		Path:       "./logs/",
+		Stdout:     true,
+		Filename:   "server.log",
+		MaxSize:    100,
+		MaxBackups: 3,
+		MaxAge:     30,
 	},
 }
 
@@ -61,9 +66,14 @@ type ServerConfig struct {
 
 // LogConfig 日志配置
 type LogConfig struct {
-	Level  string `yaml:"level"`  // 日志级别: debug, info, warn, error
-	Path   string `yaml:"path"`   // 日志输出路径
-	Stdout bool   `yaml:"stdout"` // 是否同时输出到控制台
+	Level      string `yaml:"level"`       // 业务日志级别: debug, info, warn, error
+	GnetLevel  string `yaml:"gnet_level"`  // gnet 日志级别: debug, info, warn, error（与业务层分开）
+	Path       string `yaml:"path"`        // 日志输出路径
+	Stdout     bool   `yaml:"stdout"`      // 是否同时输出到控制台
+	Filename   string `yaml:"filename"`    // 日志文件名
+	MaxSize    int64  `yaml:"max_size"`    // 最大文件大小 (MB)
+	MaxBackups int    `yaml:"max_backups"` // 最大备份文件数
+	MaxAge     int    `yaml:"max_age"`     // 最大保存天数
 }
 
 // InitConfig 全局初始化加载函数（单例模式，保证只加载一次）
@@ -123,7 +133,22 @@ func (c *Config) setDefaults() {
 	if c.Log.Level == "" {
 		c.Log.Level = Default.Log.Level
 	}
+	if c.Log.GnetLevel == "" {
+		c.Log.GnetLevel = Default.Log.GnetLevel
+	}
 	if c.Log.Path == "" {
 		c.Log.Path = Default.Log.Path
+	}
+	if c.Log.Filename == "" {
+		c.Log.Filename = Default.Log.Filename
+	}
+	if c.Log.MaxSize <= 0 {
+		c.Log.MaxSize = Default.Log.MaxSize
+	}
+	if c.Log.MaxBackups <= 0 {
+		c.Log.MaxBackups = Default.Log.MaxBackups
+	}
+	if c.Log.MaxAge <= 0 {
+		c.Log.MaxAge = Default.Log.MaxAge
 	}
 }

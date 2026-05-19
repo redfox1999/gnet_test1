@@ -2,7 +2,6 @@ package network
 
 import (
 	"context"
-	"log"
 	"runtime"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"gnet_test1/internal/manager"
 	"gnet_test1/internal/pool"
 	"gnet_test1/internal/protocol"
+	"gnet_test1/pkg/logger"
 
 	"github.com/panjf2000/gnet/v2"
 )
@@ -36,13 +36,20 @@ func (gs *GatewayServer) Addr() string {
 
 func (gs *GatewayServer) OnBoot(eng gnet.Engine) gnet.Action {
 	cfg := config.Global
-	log.Printf("🚀 网关已成功在 %s 启动！", cfg.Server.Addr)
-	log.Printf("📋 配置信息:")
-	log.Printf("   App: env=%s, version=%s", cfg.App.Env, cfg.App.Version)
-	log.Printf("   Server: multicore=%v, worker_pool_size=%d, task_queue_size=%d, max_packet_size=%d",
-		cfg.Server.Multicore, cfg.Server.WorkerPoolSize, cfg.Server.TaskQueueSize, cfg.Server.MaxPacketSize)
-	log.Printf("   Server: heartbeat_check=%ds, heartbeat_timeout=%ds", cfg.Server.HeartbeatCheck, cfg.Server.HeartbeatTimeout)
-	log.Printf("   Log: level=%s, path=%s, stdout=%v", cfg.Log.Level, cfg.Log.Path, cfg.Log.Stdout)
+	logger.ServerStarted(cfg.Server.Addr, cfg.App.Version, cfg.App.Version)
+	logger.Info().
+		Str("env", cfg.App.Env).
+		Str("version", cfg.App.Version).
+		Bool("multicore", cfg.Server.Multicore).
+		Int("worker_pool_size", cfg.Server.WorkerPoolSize).
+		Int("task_queue_size", cfg.Server.TaskQueueSize).
+		Int("max_packet_size", cfg.Server.MaxPacketSize).
+		Int("heartbeat_check", cfg.Server.HeartbeatCheck).
+		Int("heartbeat_timeout", cfg.Server.HeartbeatTimeout).
+		Str("log_level", cfg.Log.Level).
+		Str("log_path", cfg.Log.Path).
+		Bool("log_stdout", cfg.Log.Stdout).
+		Msg("📋 配置信息")
 	gs.engine = eng
 
 	return gnet.None
@@ -66,10 +73,11 @@ func (gs *GatewayServer) statsReporter() {
 	for {
 		<-ticker.C
 		runtime.ReadMemStats(&m)
-		log.Printf("📊 状态监控: 连接数=%d, Goroutine数=%d, 内存占用=%.2fMB",
+		logger.StatsReport(
 			gs.connMgr.Count(),
 			runtime.NumGoroutine(),
-			float64(m.Alloc)/1024/1024)
+			float64(m.Alloc)/1024/1024,
+		)
 	}
 }
 
@@ -77,6 +85,7 @@ func (gs *GatewayServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	connID := gs.connMgr.NextID()
 	conn := manager.NewGnetConn(c, connID)
 	gs.connMgr.Add(conn)
+	logger.ConnOpened(connID, c.RemoteAddr().String())
 	return nil, gnet.None
 }
 
@@ -84,6 +93,7 @@ func (gs *GatewayServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	if ctx := c.Context(); ctx != nil {
 		if conn, ok := ctx.(manager.Conn); ok {
 			gs.connMgr.Remove(conn.ID())
+			logger.ConnClosed(conn.ID(), c.RemoteAddr().String(), err, 0)
 		}
 	}
 	return gnet.None
@@ -91,7 +101,7 @@ func (gs *GatewayServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 
 func (gs *GatewayServer) dispatchBusiness(c gnet.Conn, cmdID uint32, payload []byte) gnet.Action {
 	if cmdID == protocol.CmdShutDown {
-		log.Println("⚠️ [核心管理] 收到管理员远程关服指令！准备停止全网服务...")
+		logger.Warn().Msg("⚠️ [核心管理] 收到管理员远程关服指令！准备停止全网服务...")
 		return gnet.Shutdown
 	}
 

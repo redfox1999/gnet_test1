@@ -2,9 +2,9 @@ package network
 
 import (
 	"encoding/binary"
-	"log"
 
 	"gnet_test1/internal/protocol"
+	"gnet_test1/pkg/logger"
 
 	"github.com/panjf2000/gnet/v2"
 )
@@ -24,7 +24,10 @@ func (gs *GatewayServer) OnTraffic(c gnet.Conn) gnet.Action {
 
 		totalLen := int(protocol.HeaderLen) + int(dataLen)
 		if totalLen > gs.cfg.MaxPacketSize {
-			log.Printf("[安全警告] 收到非法长度的恶意包: dataLen=%d，强制掐断客户端: %s", dataLen, c.RemoteAddr().String())
+			logger.Warn().
+				Uint32("data_len", dataLen).
+				Str("remote_addr", c.RemoteAddr().String()).
+				Msg("[安全警告] 收到非法长度的恶意包，强制掐断客户端")
 			return gnet.Close
 		}
 
@@ -38,6 +41,9 @@ func (gs *GatewayServer) OnTraffic(c gnet.Conn) gnet.Action {
 		}
 
 		payload := fullPacket[int(protocol.HeaderLen):totalLen]
+
+		// 需要内存池，申请内存，复制 payload 到新内存
+
 		payloadCopy := make([]byte, len(payload))
 		copy(payloadCopy, payload)
 

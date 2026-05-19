@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +12,7 @@ import (
 	"gnet_test1/internal/network"
 	"gnet_test1/internal/pool"
 	"gnet_test1/internal/protocol"
+	"gnet_test1/pkg/logger"
 )
 
 var (
@@ -31,7 +31,7 @@ func main() {
 
 	// 显示版本信息
 	if *showVersion {
-		fmt.Printf("版本: %s\n", Version)
+		fmt.Printf("版本：%s\n", Version)
 		fmt.Printf("Git Commit: %s\n", GitCommit)
 		fmt.Printf("Commit Time: %s\n", CommitTime)
 		fmt.Printf("Build Time: %s\n", BuildTime)
@@ -41,8 +41,23 @@ func main() {
 	// 加载配置文件
 	_, err := config.InitConfig(*cfgPath)
 	if err != nil {
-		log.Printf("[警告] 加载配置文件失败: %v，将使用默认配置", err)
+		logger.Warn().Err(err).Msg("加载配置文件失败，将使用默认配置")
 	}
+
+	// 初始化日志系统
+	logger.Init(&logger.Config{
+		Level:      config.Global.Log.Level,
+		GnetLevel:  config.Global.Log.GnetLevel,
+		Path:       config.Global.Log.Path,
+		Stdout:     config.Global.Log.Stdout,
+		Filename:   config.Global.Log.Filename,
+		MaxSize:    config.Global.Log.MaxSize,
+		MaxBackups: config.Global.Log.MaxBackups,
+		MaxAge:     config.Global.Log.MaxAge,
+	})
+
+	// 将自定义日志设置为 gnet 的默认日志
+	logger.SetGnetDefaultLoggerAndFlusher()
 
 	// 创建路由实例
 	router := handler.NewRouter()
@@ -70,14 +85,14 @@ func main() {
 		// 2. 将通道注册到系统的信号监听器中
 		signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
-		// 3. 阻塞等待关服信号到来（刚才报错是因为上面漏了第1步，导致这里 undefined）
+		// 3. 阻塞等待关服信号到来（刚才报错是因为上面漏了第 1 步，导致这里 undefined）
 		sig := <-sigCh
 		// 监听键盘 Ctrl+C (Interrupt) 和 Linux kill 信号 (Terminate)
-		log.Printf("⚠️ 捕获到系统退出信号 [%v]，正在启动优雅关闭流程...", sig)
+		logger.ServerShutdown(sig.String(), 0)
 
 		// 阻塞等待关服信号到来
 		server.CloseEngine()
-		log.Println("🎉 服务器优雅退出成功！")
+		logger.Info().Msg("🎉 服务器优雅退出成功！")
 		// 第一步：通知 gnet 引擎关闭。
 		// 你的 server 结构体需要暴露出内部的 gnet.Engine 实例（可以通过 OnBoot 事件拿到）
 		// 调用 engine.Stop() 会停止接收新连接，并让 main 里的 gnet.Run 优雅解除阻塞
@@ -88,6 +103,6 @@ func main() {
 	// 第二步：关闭业务线程池，确保正在处理的数据不丢失
 	//pool.GlobalPool.Shutdown()
 
-	log.Print("服务已停止")
+	logger.Info().Msg("服务已停止")
 
 }

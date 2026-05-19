@@ -14,6 +14,11 @@ server:
 
 # 日志配置
 log:
-  level: info      # 日志级别: debug, info, warn, error
-  path: ./logs/    # 日志输出路径
-  stdout: true     # 是否同时输出到控制台
+  level: info         # 业务日志级别: debug, info, warn, error
+  gnet_level: warn    # gnet 日志级别: debug, info, warn, error（与业务层分开）
+  path: ./logs/       # 日志输出路径
+  stdout: true        # 是否同时输出到控制台
+  filename: server.log  # 日志文件名
+  max_size: 100       # 最大文件大小 (MB)
+  max_backups: 3      # 最大备份文件数
+  max_age: 30         # 最大保存天数

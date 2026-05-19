@@ -2,7 +2,8 @@ package protocol
 
 import (
 	"encoding/binary"
-	"log"
+
+	"gnet_test1/pkg/logger"
 
 	"github.com/panjf2000/gnet/v2"
 )
@@ -30,6 +31,9 @@ func SendPacket(c gnet.Conn, cmdID uint32, body []byte) {
 
 	err := c.AsyncWritev([][]byte{header[:], body}, nil)
 	if err != nil {
-		log.Printf("[发送失败] 无法投递回包给 %s: %v", c.RemoteAddr().String(), err)
+		logger.Error().
+			Err(err).
+			Str("remote_addr", c.RemoteAddr().String()).
+			Msg("[发送失败] 无法投递回包")
 	}
 }
