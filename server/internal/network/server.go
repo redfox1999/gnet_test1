@@ -4,33 +4,29 @@ import (
 	"context"
 	"log"
 	"runtime"
-	"sync/atomic"
 	"time"
 
 	"gnet_test1/config"
+	"gnet_test1/internal/manager"
 	"gnet_test1/internal/pool"
 	"gnet_test1/internal/protocol"
 
 	"github.com/panjf2000/gnet/v2"
 )
 
-type UserContext struct {
-	ConnID int64
-}
-
 type GatewayServer struct {
 	gnet.BuiltinEventEngine
 	cfg        *config.ServerConfig
-	connCount  int64
-	nextConnID int64
-	engine     gnet.Engine      // 用于暂存 gnet 引擎句柄
-	workerPool *pool.WorkerPool // 业务线程池
+	engine     gnet.Engine          // 用于暂存 gnet 引擎句柄
+	workerPool *pool.WorkerPool     // 业务线程池
+	connMgr    *manager.ConnManager // 连接管理器
 }
 
 func NewGatewayServer(cfg *config.ServerConfig, workerPool *pool.WorkerPool) *GatewayServer {
 	return &GatewayServer{
 		cfg:        cfg,
 		workerPool: workerPool,
+		connMgr:    manager.NewConnManager(),
 	}
 }
 
@@ -71,46 +67,43 @@ func (gs *GatewayServer) statsReporter() {
 		<-ticker.C
 		runtime.ReadMemStats(&m)
 		log.Printf("📊 状态监控: 连接数=%d, Goroutine数=%d, 内存占用=%.2fMB",
-			atomic.LoadInt64(&gs.connCount),
+			gs.connMgr.Count(),
 			runtime.NumGoroutine(),
 			float64(m.Alloc)/1024/1024)
 	}
 }
 
 func (gs *GatewayServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	connID := atomic.AddInt64(&gs.nextConnID, 1)
-	ctx := &UserContext{
-		ConnID: connID,
-	}
-	c.SetContext(ctx)
-	atomic.AddInt64(&gs.connCount, 1)
-	//log.Printf("[连接成功] ConnID=%d，来自客户端: %s，当前在线: %d", connID,
-	//	c.RemoteAddr().String(), atomic.LoadInt64(&gs.connCount))
+	connID := gs.connMgr.NextID()
+	conn := manager.NewGnetConn(c, connID)
+	gs.connMgr.Add(conn)
 	return nil, gnet.None
 }
 
 func (gs *GatewayServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
-	atomic.AddInt64(&gs.connCount, -1)
-	//var connID int64
-	// if ctx, ok := c.Context().(*UserContext); ok {
-	// 	connID = ctx.ConnID
-	// }
-	//log.Printf("[连接断开] ConnID=%d，客户端断开: %s，当前在线: %d，错误=%v",
-	//	connID, c.RemoteAddr().String(), atomic.LoadInt64(&gs.connCount), err)
+	if ctx := c.Context(); ctx != nil {
+		if conn, ok := ctx.(manager.Conn); ok {
+			gs.connMgr.Remove(conn.ID())
+		}
+	}
 	return gnet.None
 }
 
 func (gs *GatewayServer) dispatchBusiness(c gnet.Conn, cmdID uint32, payload []byte) gnet.Action {
-	ctx, _ := c.Context().(*UserContext)
-
 	if cmdID == protocol.CmdShutDown {
 		log.Println("⚠️ [核心管理] 收到管理员远程关服指令！准备停止全网服务...")
 		return gnet.Shutdown
 	}
 
-	// 构建工作任务并提交到线程池
+	var connID uint64
+	if ctx := c.Context(); ctx != nil {
+		if conn, ok := ctx.(manager.Conn); ok {
+			connID = conn.ID()
+		}
+	}
+
 	task := &pool.WorkTask{
-		ConnID: uint64(ctx.ConnID),
+		ConnID: connID,
 		CmdID:  uint16(cmdID),
 		Body:   payload,
 		Conn:   c,

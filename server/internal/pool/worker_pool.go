@@ -32,17 +32,16 @@ func newWorker(id int, queueSize int, router *handler.Router) *Worker {
 
 // start 让 Worker 启动一个常驻 goroutine 监听自己的 channel
 func (w *Worker) start() {
-	go func() {
-		//log.Printf("[WorkerPool] 专属工作者 Worker-%d 启动就绪", w.id)
-		for task := range w.ch {
-			if task == nil {
-				break
-			}
-			// 核心闭环：通过连接对应的绑定的 Router 进行业务回调
-			w.router.Execute(task.Conn, task.CmdID, task.Body)
+	go w.workLoop()
+}
+
+func (w *Worker) workLoop() {
+	for task := range w.ch {
+		if task == nil {
+			break
 		}
-		//log.Printf("[WorkerPool] Worker-%d 安全停止", w.id)
-	}()
+		w.router.Execute(task.Conn, task.CmdID, task.Body)
+	}
 }
 
 // WorkerPool 统一管理层
