@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/panjf2000/gnet/v2/pkg/logging"
 	"github.com/rs/zerolog"
@@ -192,71 +191,6 @@ func Warnf(format string, v ...interface{}) {
 // Errorf 格式化输出 error 日志
 func Errorf(format string, v ...interface{}) {
 	Get().Error().Msgf(format, v...)
-}
-
-// 业务场景日志方法
-
-// ServerStarted 记录服务器启动
-func ServerStarted(addr, version, gitCommit string) {
-	Get().Info().
-		Str("version", version).
-		Str("git_commit", gitCommit).
-		Str("addr", addr).
-		Msg("🚀 服务器启动成功")
-}
-
-// ServerShutdown 记录服务器关闭
-func ServerShutdown(signal string, duration time.Duration) {
-	Get().Info().
-		Str("signal", signal).
-		Dur("duration", duration).
-		Msg("⚠️ 服务器已关闭")
-}
-
-// ConnOpened 记录连接建立
-func ConnOpened(connID uint64, addr string) {
-	Get().Info().
-		Uint64("conn_id", connID).
-		Str("remote_addr", addr).
-		Msg("📡 新连接建立")
-}
-
-// ConnClosed 记录连接关闭
-func ConnClosed(connID uint64, addr string, err error, duration time.Duration) {
-	event := Get().Info().
-		Uint64("conn_id", connID).
-		Str("remote_addr", addr).
-		Dur("duration", duration)
-	if err != nil {
-		event.Err(err)
-	}
-	event.Msg("🔌 连接已关闭")
-}
-
-// BusinessProcessed 记录业务处理完成
-func BusinessProcessed(connID uint64, cmdID uint16, duration time.Duration) {
-	Get().Debug().
-		Uint64("conn_id", connID).
-		Uint16("cmd_id", cmdID).
-		Dur("duration", duration).
-		Msg("⚙️ 业务处理完成")
-}
-
-// WorkerQueueFull 记录工作队列已满
-func WorkerQueueFull(workerID int, connID uint64) {
-	Get().Warn().
-		Int("worker_id", workerID).
-		Uint64("conn_id", connID).
-		Msg("⚠️ Worker 队列已满，连接已关闭")
-}
-
-// StatsReport 定期状态报告
-func StatsReport(connCount int, goroutineCount int, memoryMB float64) {
-	Get().Info().
-		Int("connections", connCount).
-		Int("goroutines", goroutineCount).
-		Float64("memory_mb", memoryMB).
-		Msg("📊 状态监控")
 }
 
 // GnetLoggerAdapter 适配 gnet Logger 接口的适配器（使用独立的日志级别）

@@ -36,7 +36,10 @@ func (gs *GatewayServer) Addr() string {
 
 func (gs *GatewayServer) OnBoot(eng gnet.Engine) gnet.Action {
 	cfg := config.Global
-	logger.ServerStarted(cfg.Server.Addr, cfg.App.Version, cfg.App.Version)
+	logger.Info().
+		Str("version", cfg.App.Version).
+		Str("addr", cfg.Server.Addr).
+		Msg("🚀 服务器启动成功")
 	logger.Info().
 		Str("env", cfg.App.Env).
 		Str("version", cfg.App.Version).
@@ -73,11 +76,11 @@ func (gs *GatewayServer) statsReporter() {
 	for {
 		<-ticker.C
 		runtime.ReadMemStats(&m)
-		logger.StatsReport(
-			gs.connMgr.Count(),
-			runtime.NumGoroutine(),
-			float64(m.Alloc)/1024/1024,
-		)
+		logger.Info().
+			Int("connections", gs.connMgr.Count()).
+			Int("goroutines", runtime.NumGoroutine()).
+			Float64("memory_mb", float64(m.Alloc)/1024/1024).
+			Msg("📊 状态监控")
 	}
 }
 
@@ -85,7 +88,6 @@ func (gs *GatewayServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	connID := gs.connMgr.NextID()
 	conn := manager.NewGnetConn(c, connID)
 	gs.connMgr.Add(conn)
-	logger.ConnOpened(connID, c.RemoteAddr().String())
 	return nil, gnet.None
 }
 
@@ -93,7 +95,6 @@ func (gs *GatewayServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	if ctx := c.Context(); ctx != nil {
 		if conn, ok := ctx.(manager.Conn); ok {
 			gs.connMgr.Remove(conn.ID())
-			logger.ConnClosed(conn.ID(), c.RemoteAddr().String(), err, 0)
 		}
 	}
 	return gnet.None

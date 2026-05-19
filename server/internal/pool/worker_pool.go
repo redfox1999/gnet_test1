@@ -75,7 +75,10 @@ func (wp *WorkerPool) Submit(task *WorkTask) {
 
 	default:
 		// 🚨 触发保护机制：该 Worker 的业务队列已经爆满了（说明业务处理速度赶不上客户端发包速度）
-		logger.WorkerQueueFull(targetWorker.id, task.ConnID)
+		logger.Warn().
+			Int("worker_id", targetWorker.id).
+			Uint64("conn_id", task.ConnID).
+			Msg("⚠️ Worker 队列已满，连接已关闭")
 
 		// 生产环境常用做法：
 		// 方案 A：直接丢弃该数据包，什么都不做。

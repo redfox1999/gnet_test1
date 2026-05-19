@@ -88,7 +88,7 @@ func main() {
 		// 3. 阻塞等待关服信号到来（刚才报错是因为上面漏了第 1 步，导致这里 undefined）
 		sig := <-sigCh
 		// 监听键盘 Ctrl+C (Interrupt) 和 Linux kill 信号 (Terminate)
-		logger.ServerShutdown(sig.String(), 0)
+		logger.Info().Str("signal", sig.String()).Msg("⚠️ 服务器已关闭")
 
 		// 阻塞等待关服信号到来
 		server.CloseEngine()
