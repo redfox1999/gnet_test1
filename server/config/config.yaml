@@ -8,7 +8,7 @@ server:
   addr: "tcp://0.0.0.0:9000"    # 监听地址
   multicore: true                # 是否开启多核心绑定
   worker_pool_size: 1024         # 业务线程池大小
-  max_packet_size: 1048576       # 单个包最大限制（字节），默认 1MB
+  max_packet_size: 65535       # 单个包最大限制（字节），默认 65535
   heartbeat_check: 30            # 心跳检测间隔（秒）
   heartbeat_timeout: 90          # 心跳超时时间（秒）
 

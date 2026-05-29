@@ -47,6 +47,5 @@ func (r *Router) Execute(c gnet.Conn, cmdID uint32, body []byte) {
 		conn.DelPendingTask()
 	}
 
-	// 可以在这里加上内存池，回收 body 内存
 	// 可以加一个 else 记录未定义路由的日志
 }

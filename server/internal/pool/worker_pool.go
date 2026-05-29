@@ -32,6 +32,7 @@ func (w *Worker) workLoop() {
 			break
 		}
 		w.router.Execute(task.Conn, task.CmdID, task.Body)
+		// 可以统计每个Task的处理时间
 		PutWorkTask(task)
 	}
 }
