@@ -8,7 +8,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 )
 
-type Conn interface {
+type IConnection interface {
 	ID() uint64
 	RemoteAddr() string
 	Send(cmdID uint32, body []byte) error
@@ -64,18 +64,18 @@ func (c *gnetConn) DelPendingTask() int32 {
 }
 
 type ConnManager struct {
-	conns      map[uint64]Conn
+	conns      map[uint64]IConnection
 	mu         sync.RWMutex
 	nextConnID uint64
 }
 
 func NewConnManager() *ConnManager {
 	return &ConnManager{
-		conns: make(map[uint64]Conn),
+		conns: make(map[uint64]IConnection),
 	}
 }
 
-func (cm *ConnManager) Add(c Conn) {
+func (cm *ConnManager) Add(c IConnection) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	cm.conns[c.ID()] = c
@@ -87,7 +87,7 @@ func (cm *ConnManager) Remove(id uint64) {
 	delete(cm.conns, id)
 }
 
-func (cm *ConnManager) Get(id uint64) Conn {
+func (cm *ConnManager) Get(id uint64) IConnection {
 	cm.mu.RLock()
 	defer cm.mu.RUnlock()
 	return cm.conns[id]
@@ -103,7 +103,7 @@ func (cm *ConnManager) NextID() uint64 {
 	return atomic.AddUint64(&cm.nextConnID, 1)
 }
 
-func NewGnetConn(conn gnet.Conn, id uint64) Conn {
+func NewGnetConn(conn gnet.Conn, id uint64) IConnection {
 	gc := &gnetConn{
 		conn: conn,
 		id:   id,

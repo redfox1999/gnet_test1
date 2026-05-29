@@ -50,6 +50,7 @@ func GetBytes(size int) []byte {
 	}
 
 	// 🌟 精准判断是否命中：如果 MakeCount 没有增加，说明是从池子里捞出来的
+	//  这里可能会统计错误，但比例较少，不影响监控指标
 	afterMake := atomic.LoadUint64(&Metrics.MakeCount)
 	if afterMake == beforeMake {
 		atomic.AddUint64(&Metrics.HitCount, 1)

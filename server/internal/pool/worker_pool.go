@@ -60,7 +60,7 @@ func InitWorkerPool(poolSize int, queueSize int, r *handler.Router) *WorkerPool 
 func (wp *WorkerPool) Submit(task *WorkTask) {
 	workerIdx := int(task.ConnID % uint64(wp.size))
 	targetWorker := wp.workers[workerIdx]
-	conn := task.Conn.Context().(manager.Conn)
+	conn := task.Conn.Context().(manager.IConnection)
 	conn.AddPendingTask()
 
 	// 使用 select 块实现「非阻塞」投递

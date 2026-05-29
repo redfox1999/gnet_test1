@@ -98,7 +98,7 @@ func (gs *GatewayServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 
 func (gs *GatewayServer) OnClose(c gnet.Conn, err error) (action gnet.Action) {
 	if ctx := c.Context(); ctx != nil {
-		if conn, ok := ctx.(manager.Conn); ok {
+		if conn, ok := ctx.(manager.IConnection); ok {
 			gs.connMgr.Remove(conn.ID())
 		}
 	}
@@ -113,7 +113,7 @@ func (gs *GatewayServer) dispatchBusiness(c gnet.Conn, cmdID uint32, payload []b
 
 	var connID uint64
 	if ctx := c.Context(); ctx != nil {
-		if conn, ok := ctx.(manager.Conn); ok {
+		if conn, ok := ctx.(manager.IConnection); ok {
 			connID = conn.ID()
 		}
 	}

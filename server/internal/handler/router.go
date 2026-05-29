@@ -43,7 +43,7 @@ func (r *Router) RegisterFunc(cmdID uint32, h func(c gnet.Conn, cmdID uint32, bo
 func (r *Router) Execute(c gnet.Conn, cmdID uint32, body []byte) {
 	if h, exists := r.handlers[cmdID]; exists {
 		h.Handle(c, cmdID, body)
-		conn := c.Context().(manager.Conn)
+		conn := c.Context().(manager.IConnection)
 		conn.DelPendingTask()
 	}
 
