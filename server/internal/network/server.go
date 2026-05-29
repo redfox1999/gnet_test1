@@ -84,6 +84,7 @@ func (gs *GatewayServer) statsReporter() {
 			Uint64("pool_get", pool.Metrics.GetCount).
 			Uint64("pool_hit", pool.Metrics.HitCount).
 			Uint64("pool_make", pool.Metrics.MakeCount).
+			Uint64("RawAlloc", pool.Metrics.RawAlloc).
 			Msg("📊 状态监控")
 	}
 }
